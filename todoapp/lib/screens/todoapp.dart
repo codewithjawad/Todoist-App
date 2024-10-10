@@ -27,7 +27,7 @@ class _TodoState extends State<TodoT> {
   Future<void> fetchTasks() async {
     try {
       final response = await http.get(Uri.parse(
-          "https://crudcrud.com/api/d19f249392ac4f01b9186842d3a8f326/unicorns"));
+          "https://crudcrud.com/api/e20ec28068e044e78f2924df3c8fa3cd/unicorns"));
       if (response.statusCode == 200) {
         List<dynamic> data = jsonDecode(response.body);
         setState(() {
@@ -49,7 +49,7 @@ class _TodoState extends State<TodoT> {
 
       final response = await http.post(
         Uri.parse(
-            'https://crudcrud.com/api/d19f249392ac4f01b9186842d3a8f326/unicorns'),
+            'https://crudcrud.com/api/e20ec28068e044e78f2924df3c8fa3cd/unicorns'),
         headers: {'Content-Type': 'application/json'},
         body: json.encode(taskMap),
       );
@@ -76,7 +76,7 @@ class _TodoState extends State<TodoT> {
     try {
       final response = await http.put(
         Uri.parse(
-            'https://crudcrud.com/api/d19f249392ac4f01b9186842d3a8f326/unicorns/$id'),
+            'https://crudcrud.com/api/e20ec28068e044e78f2924df3c8fa3cd/unicorns/$id'),
         headers: {'Content-Type': 'application/json'},
         body: json.encode(userdata),
       );
@@ -94,7 +94,7 @@ class _TodoState extends State<TodoT> {
     try {
       final response = await http.delete(
         Uri.parse(
-            'https://crudcrud.com/api/d19f249392ac4f01b9186842d3a8f326/unicorns/$id'),
+            'https://crudcrud.com/api/e20ec28068e044e78f2924df3c8fa3cd/unicorns/$id'),
       );
       if (response.statusCode == 200) {
         fetchTasks();
@@ -127,9 +127,12 @@ class _TodoState extends State<TodoT> {
   }
 
   void _showUpdateDialog(BuildContext context, taskmodel task) {
-    addController.text = task.taskname ?? '';
-    descriptionController.text = task.description ?? '';
-    selectedPriority = task.priority ?? 'High';
+    // Separate controllers for update dialog
+    TextEditingController updateNameController =
+        TextEditingController(text: task.taskname);
+    TextEditingController updateDescriptionController =
+        TextEditingController(text: task.description);
+    String updatePriority = task.priority ?? 'High';
 
     showDialog(
       context: context,
@@ -140,18 +143,18 @@ class _TodoState extends State<TodoT> {
             mainAxisSize: MainAxisSize.min,
             children: [
               TextField(
-                controller: addController,
+                controller: updateNameController,
                 decoration: const InputDecoration(hintText: "Enter task name"),
               ),
               const SizedBox(height: 10),
               TextField(
-                controller: descriptionController,
+                controller: updateDescriptionController,
                 decoration:
                     const InputDecoration(hintText: "Enter description"),
               ),
               const SizedBox(height: 10),
               DropdownButtonFormField<String>(
-                value: selectedPriority,
+                value: updatePriority,
                 items: const [
                   DropdownMenuItem(value: 'High', child: Text('High')),
                   DropdownMenuItem(value: 'Medium', child: Text('Medium')),
@@ -159,7 +162,7 @@ class _TodoState extends State<TodoT> {
                 ],
                 onChanged: (value) {
                   setState(() {
-                    selectedPriority = value!;
+                    updatePriority = value!;
                   });
                 },
                 decoration: const InputDecoration(labelText: 'Priority'),
@@ -176,16 +179,14 @@ class _TodoState extends State<TodoT> {
             TextButton(
               child: const Text('Update'),
               onPressed: () {
-                if (addController.text.isNotEmpty &&
-                    descriptionController.text.isNotEmpty) {
+                if (updateNameController.text.isNotEmpty &&
+                    updateDescriptionController.text.isNotEmpty) {
                   updateData(task.sId!, {
-                    'taskname': addController.text,
-                    'description': descriptionController.text,
-                    'priority': selectedPriority,
+                    'taskname': updateNameController.text,
+                    'description': updateDescriptionController.text,
+                    'priority': updatePriority,
                   });
                   Navigator.of(context).pop();
-                  addController.clear();
-                  descriptionController.clear();
                 } else {
                   _showAlertDialog(
                       "Error", "Please fill all the fields before updating.");
@@ -208,7 +209,6 @@ class _TodoState extends State<TodoT> {
 
   int _priorityValue(String? priority) {
     switch (priority?.toLowerCase()) {
-      // Normalize case
       case 'high':
         return 3;
       case 'medium':
@@ -225,7 +225,7 @@ class _TodoState extends State<TodoT> {
       tasks = tasks
           .where((task) =>
               task.priority?.toLowerCase() == filterPriority?.toLowerCase())
-          .toList(); // Normalize case
+          .toList();
     }
   }
 
@@ -316,26 +316,19 @@ class _TodoState extends State<TodoT> {
               controller: addController,
               decoration: const InputDecoration(
                 labelText: "Task Name",
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.all(Radius.circular(20)),
-                ),
-                prefixIcon: Icon(Icons.task),
               ),
             ),
-            const SizedBox(height: 10),
             TextField(
               controller: descriptionController,
               decoration: const InputDecoration(
-                labelText: "Description",
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.all(Radius.circular(20)),
-                ),
-                prefixIcon: Icon(Icons.description),
+                labelText: "Task Description",
               ),
             ),
-            const SizedBox(height: 10),
+            // Ensure the priority value is in a consistent case
             DropdownButtonFormField<String>(
-              value: selectedPriority,
+              value: selectedPriority.isNotEmpty
+                  ? selectedPriority
+                  : 'High', // Ensure a valid default value
               items: const [
                 DropdownMenuItem(value: 'High', child: Text('High')),
                 DropdownMenuItem(value: 'Medium', child: Text('Medium')),
@@ -343,12 +336,14 @@ class _TodoState extends State<TodoT> {
               ],
               onChanged: (value) {
                 setState(() {
-                  selectedPriority = value!;
+                  selectedPriority = value ?? 'High'; // Handle null cases
                 });
               },
               decoration: const InputDecoration(labelText: 'Priority'),
             ),
-            const SizedBox(height: 10),
+            const SizedBox(
+              height: 20,
+            ),
             ElevatedButton(
               onPressed: () {
                 if (addController.text.isNotEmpty &&
@@ -365,22 +360,39 @@ class _TodoState extends State<TodoT> {
               },
               child: const Text("Add Task"),
             ),
-            const SizedBox(height: 10),
+            const SizedBox(height: 20),
             Expanded(
               child: ListView.builder(
                 itemCount: tasks.length,
                 itemBuilder: (context, index) {
-                  return Card(
-                    child: ListTile(
-                      title: Text(tasks[index].taskname ?? ''),
-                      subtitle: Text(tasks[index].description ?? ''),
-                      trailing: Text(tasks[index].priority ?? ''),
-                      onTap: () {
-                        _showUpdateDialog(context, tasks[index]);
-                      },
-                      onLongPress: () {
-                        deleteData(tasks[index].sId!);
-                      },
+                  return ListTile(
+                    title: Text(tasks[index].taskname ?? 'No name'),
+                    subtitle: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                        'Priority: ${tasks[index].priority ?? 'No priority'}'),
+                        Text(
+                        'Description: ${tasks[index].description ?? ''}')
+                      ],
+                    ),
+                    trailing: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        IconButton(
+                          icon: const Icon(Icons.edit),
+                          onPressed: () {
+                            _showUpdateDialog(context, tasks[index]);
+                          },
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.delete),
+                          onPressed: () {
+                            deleteData(tasks[index].sId!);
+                          },
+                        ),
+                      ],
                     ),
                   );
                 },

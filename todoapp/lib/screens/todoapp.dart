@@ -207,7 +207,8 @@ class _TodoState extends State<TodoT> {
   }
 
   int _priorityValue(String? priority) {
-    switch (priority?.toLowerCase()) { // Normalize case
+    switch (priority?.toLowerCase()) {
+      // Normalize case
       case 'high':
         return 3;
       case 'medium':
@@ -221,7 +222,10 @@ class _TodoState extends State<TodoT> {
 
   void _filterTasks() {
     if (filterPriority != null) {
-      tasks = tasks.where((task) => task.priority?.toLowerCase() == filterPriority?.toLowerCase()).toList();
+      tasks = tasks
+          .where((task) =>
+              task.priority?.toLowerCase() == filterPriority?.toLowerCase())
+          .toList(); // Normalize case
     }
   }
 

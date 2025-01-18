@@ -24,7 +24,7 @@ jobs:
         - run: flutter pub get
         - run: flutter build apk --debug --split-per-abi
         - run: |
-            flutter build ios --no-codesign
+            flutter build ios
             cd build/ios/iphoneos
             mkdir Payload
             cd Payload
@@ -36,7 +36,7 @@ jobs:
           with:
             artifacts: "build/app/outputs/apk/debug/*,build/ios/iphoneos/app.ipa"
             tag: v1.0.${{ github.run_number }}
-            token: secrets.TOKEN
+            token: ${{secrets.TOKEN}}
   
   
   
